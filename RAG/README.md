@@ -1,6 +1,6 @@
 # Cybersecurity RAG
 
-This small retrieval-augmented generation example loads seven cybersecurity Markdown documents, splits each paragraph into a chunk, embeds chunks with the existing `sentence-transformers/all-MiniLM-L6-v2` model, retrieves the top three chunks, and asks an LLM to answer from that context. Embeddings are generated once and reused between queries.
+This small retrieval-augmented generation example loads seven cybersecurity Markdown documents, splits each paragraph into a chunk, embeds chunks with the existing `sentence-transformers/all-MiniLM-L6-v2` model, retrieves the top ten semantic candidates, reranks them with `cross-encoder/ms-marco-MiniLM-L-6-v2`, and asks an LLM to answer from the top three chunks. Embeddings are generated once and reused between queries.
 
 ## Setup
 
@@ -23,4 +23,4 @@ python rag.py
 
 Run `embed_documents.py` once after adding or editing documents. The query app reuses the saved `embeddings.npz` cache and tells you to rebuild if the documents or embedding model changed.
 
-Every query retrieves exactly three chunks. The answer includes source filenames whose similarity meets `MIN_RELEVANCE`. When no retrieved chunk meets that threshold, the program reports that the documents do not contain enough relevant evidence and does not call the LLM.
+Every query uses the existing embedding cache for semantic retrieval, then passes the ten highest-similarity candidates through the cross-encoder and sends the three highest reranker scores to the LLM. Cross-encoder scores are raw logits, not cosine similarities; the default `MIN_RERANK_SCORE=-1.0` is a conservative baseline for the default model and can be tuned for another model. Set `RERANKER_MODEL` to experiment with another cross-encoder.
